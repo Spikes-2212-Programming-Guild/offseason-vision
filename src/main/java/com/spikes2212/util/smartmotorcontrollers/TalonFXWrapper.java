@@ -4,11 +4,9 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.GravityTypeValue;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
-import com.spikes2212.control.FeedForwardSettings;
+import com.ctre.phoenix6.signals.*;
+import com.ctre.phoenix6.sim.TalonFXSimState;
+import com.spikes2212.control.FFSettings;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.util.UnifiedControlMode;
@@ -90,14 +88,14 @@ public class TalonFXWrapper implements SmartMotorController {
     }
 
     @Override
-    public void configureFF(FeedForwardSettings feedForwardSettings) {
-        closedLoopConfig.kS = feedForwardSettings.getkS();
-        closedLoopConfig.kV = feedForwardSettings.getkV();
-        closedLoopConfig.kA = feedForwardSettings.getkA();
-        closedLoopConfig.kG = feedForwardSettings.getkG();
+    public void configureFF(FFSettings ffSettings) {
+        closedLoopConfig.kS = ffSettings.getkS();
+        closedLoopConfig.kV = ffSettings.getkV();
+        closedLoopConfig.kA = ffSettings.getkA();
+        closedLoopConfig.kG = ffSettings.getkG();
         StaticFeedforwardSignValue kSType;
         GravityTypeValue kGType;
-        switch (feedForwardSettings.getControlMode()) {
+        switch (ffSettings.getControlMode()) {
             case LINEAR_POSITION -> {
                 kSType = StaticFeedforwardSignValue.UseClosedLoopSign;
                 kGType = GravityTypeValue.Elevator_Static;
@@ -137,9 +135,9 @@ public class TalonFXWrapper implements SmartMotorController {
 
     @Override
     public void pidSet(UnifiedControlMode controlMode, double setpoint, PIDSettings pidSettings,
-                       FeedForwardSettings feedForwardSettings, TrapezoidProfileSettings trapezoidProfileSettings,
+                       FFSettings ffSettings, TrapezoidProfileSettings trapezoidProfileSettings,
                        boolean updatePeriodically) {
-        if (updatePeriodically) configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
+        if (updatePeriodically) configureLoop(pidSettings, ffSettings, trapezoidProfileSettings);
         ControlRequest request = switch (controlMode) {
             case CURRENT -> new TorqueCurrentFOC(setpoint);
             case PERCENT_OUTPUT -> new DutyCycleOut(setpoint);
@@ -153,18 +151,19 @@ public class TalonFXWrapper implements SmartMotorController {
 
     @Override
     public void pidSet(UnifiedControlMode controlMode, double setpoint, double acceleration, PIDSettings pidSettings,
-                       FeedForwardSettings feedForwardSettings, boolean updatePeriodically) {
-        pidSet(controlMode, setpoint, pidSettings, feedForwardSettings, new TrapezoidProfileSettings(0, 0), updatePeriodically);
+                       FFSettings ffSettings, boolean updatePeriodically) {
+        pidSet(controlMode, setpoint, pidSettings, ffSettings, new TrapezoidProfileSettings(0, 0), updatePeriodically);
     }
 
     @Override
     public void pidSet(UnifiedControlMode controlMode, double setpoint, PIDSettings pidSettings,
-                       FeedForwardSettings feedForwardSettings, boolean updatePeriodically) {
-        pidSet(controlMode, setpoint, 0, pidSettings, feedForwardSettings, updatePeriodically);
+                       FFSettings ffSettings, boolean updatePeriodically) {
+        pidSet(controlMode, setpoint, 0, pidSettings, ffSettings, updatePeriodically);
     }
 
     public void follow(TalonFX master, boolean invert) {
-//        talonFX.setControl(new Follower(master.getDeviceID(), invert));
+        talonFX.setControl(new Follower(master.getDeviceID(),
+                invert ? MotorAlignmentValue.Opposed : MotorAlignmentValue.Aligned));
     }
 
     public void follow(TalonFXWrapper master, boolean invert) {
@@ -241,6 +240,10 @@ public class TalonFXWrapper implements SmartMotorController {
 
     public double getVoltage() {
         return talonFX.getMotorVoltage().getValueAsDouble();
+    }
+
+    public TalonFXSimState getSim() {
+        return talonFX.getSimState();
     }
 
     @Override
