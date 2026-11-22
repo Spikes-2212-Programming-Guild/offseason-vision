@@ -6,22 +6,35 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.swerve.Swerve;
+import frc.robot.swerve.SwerveConstants;
+import frc.robot.vision.Vision;
 
 public class Robot extends TimedRobot {
 
-    @Override
-    public void robotInit() {
+    private final Swerve swerve;
+    private final Vision vision;
 
+    public Robot() {
+        swerve = Swerve.getInstance();
+        vision = Vision.getInstance();
     }
 
     @Override
     public void robotPeriodic() {
-
+        CommandScheduler.getInstance().run();
+        SwerveConstants.updateNamespace();
     }
 
     @Override
     public void disabledInit() {
         CommandScheduler.getInstance().cancelAll();
+        vision.setThrottle(true);
+    }
+
+    @Override
+    public void disabledExit() {
+        vision.setThrottle(false);
     }
 
     @Override
@@ -41,12 +54,16 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
-
+        OI oi = new OI();
+        swerve.setDefaultCommand(swerve.driveWithController(
+                oi::getLeftX,
+                oi::getLeftY,
+                oi::getRightX, true, 5.1
+        ));
     }
 
     @Override
     public void teleopPeriodic() {
-
     }
 
     @Override
