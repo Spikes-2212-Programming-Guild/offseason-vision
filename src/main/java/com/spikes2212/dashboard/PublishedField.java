@@ -28,7 +28,7 @@ public class PublishedField<T> {
             return;
 
         valuePublisher.accept(currentValue);
-
+//
         lastPublishedValue = currentValue;
         hasPublished = true;
     }
