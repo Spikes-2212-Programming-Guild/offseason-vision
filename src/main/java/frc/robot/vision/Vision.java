@@ -2,14 +2,15 @@ package frc.robot.vision;
 
 import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import limelight.Limelight;
-import limelight.networktables.LimelightPoseEstimator;
-import limelight.networktables.LimelightSettings;
-import limelight.networktables.PoseEstimate;
+import limelight.networktables.*;
 import limelight.results.RawFiducial;
 
 import java.util.Optional;
+
+import static edu.wpi.first.units.Units.DegreesPerSecond;
 
 public class Vision extends SubsystemBase {
 
@@ -29,7 +30,7 @@ public class Vision extends SubsystemBase {
 
     private Vision() {
         this.limelight = new Limelight(VisionConstants.LIMELIGHT_NAME);
-        this.poseEstimator = limelight.createPoseEstimator(LimelightPoseEstimator.EstimationMode.MEGATAG1);
+        this.poseEstimator = limelight.createPoseEstimator(LimelightPoseEstimator.EstimationMode.MEGATAG2);
         this.namespace = new RootNamespace(VisionConstants.NAMESPACE_NAME);
         configureLimelight(limelight);
         configureDashboard();
@@ -95,23 +96,42 @@ public class Vision extends SubsystemBase {
         limelight.getSettings().withThrottle(enable ? VisionConstants.THROTTLE : 0).save();
     }
 
-    public void updatePose() {
+    public Optional<VisionMeasurement> getVisionMeasurement() {
         Optional<PoseEstimate> optional = poseEstimator.getPoseEstimate();
-        if (optional.isEmpty()) return;
+        if (optional.isEmpty()) return Optional.empty();
 
         PoseEstimate poseEstimate = optional.get();
-        if (!isMeasurementAccurate(poseEstimate)) return;
+        if (!isMeasurementAccurate(poseEstimate)) return Optional.empty();
 
-        robotPose = poseEstimate.pose;
+        double standardDeviations = calculateStandardDeviation(
+                2, poseEstimate.avgTagDist, poseEstimate.tagCount
+        );
+
+        return Optional.of(new VisionMeasurement(poseEstimate,
+                new StandardDeviations(standardDeviations, standardDeviations, standardDeviations))
+        );
+    }
+
+    private double calculateStandardDeviation(double exponent, double distance, int numberOfVisibleTags) {
+        return exponent * (distance * distance) / (numberOfVisibleTags * numberOfVisibleTags);
     }
 
     private boolean isMeasurementAccurate(PoseEstimate poseEstimate) {
         return poseEstimate.avgTagDist < 4 && poseEstimate.tagCount > 0 && poseEstimate.getMinTagAmbiguity() < 0.3;
     }
 
+    public void updateYaw(double yaw) {
+        limelight.getSettings().withRobotOrientation(new Orientation3d(
+                new Rotation3d(0, 0, yaw),
+                new AngularVelocity3d(
+                        DegreesPerSecond.of(0),
+                        DegreesPerSecond.of(0),
+                        DegreesPerSecond.of(0)))
+        ).save();
+    }
+
     @Override
     public void periodic() {
         namespace.update();
-        updatePose();
     }
 }

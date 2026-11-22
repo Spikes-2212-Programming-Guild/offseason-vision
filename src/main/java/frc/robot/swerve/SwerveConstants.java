@@ -28,7 +28,7 @@ public class SwerveConstants {
         ));
 
         PIDSettings TURN_PID_SETTINGS = namespace.addPIDNamespace("turn", new PIDSettings(
-                0.02, 0, 0.0001, 0, 0, 0
+                0.012, 0, 0.0001, 0, 0, 0
         ));
 
         FFSettings TURN_FF_SETTINGS = namespace.addFFNamespace("turn", new FFSettings(
@@ -52,7 +52,7 @@ public class SwerveConstants {
         CANBus CAN_BUS = new CANBus("canivore");
 
         boolean FRONT_LEFT_DRIVE_INVERTED = false;
-        boolean FRONT_RIGHT_DRIVE_INVERTED = false;
+        boolean FRONT_RIGHT_DRIVE_INVERTED = true;
         boolean BACK_LEFT_DRIVE_INVERTED = false;
         boolean BACK_RIGHT_DRIVE_INVERTED = true;
 
@@ -66,10 +66,10 @@ public class SwerveConstants {
         String BACK_LEFT_NAMESPACE_NAME = "back left";
         String BACK_RIGHT_NAMESPACE_NAME = "back right";
 
-        double FRONT_LEFT_OFFSET = 61.640625;
-        double FRONT_RIGHT_OFFSET = 207.50976562;
-        double BACK_LEFT_OFFSET = 162.10546875;
-        double BACK_RIGHT_OFFSET = 168.04101563;
+        double FRONT_LEFT_OFFSET = 61.640;
+        double FRONT_RIGHT_OFFSET = 27.509;
+        double BACK_LEFT_OFFSET = 162.105;
+        double BACK_RIGHT_OFFSET = 168.041;
     }
 
     public static void updateNamespace() {

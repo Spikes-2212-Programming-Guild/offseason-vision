@@ -58,7 +58,7 @@ public class SwerveModuleRebuilt extends SwerveModule {
     @Override
     protected void configureTurnController() {
         turnMotor.restoreFactoryDefaults();
-        turnMotor.setInverted(turnMotorInverted);
+        turnMotor.setInverted(!turnMotorInverted);
         turnMotor.setIdleMode(SparkBaseConfig.IdleMode.kBrake);
         turnMotor.setPositionConversionFactor(TURN_POSITION_IN_ROTATION);
         turnMotor.setVelocityConversionFactor(TURN_VELOCITY_IN_ROTATION);

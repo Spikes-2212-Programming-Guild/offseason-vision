@@ -55,10 +55,12 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopInit() {
         OI oi = new OI();
+        swerve.resetRelativeEncoders();
+        swerve.resetFieldRelativity();
         swerve.setDefaultCommand(swerve.driveWithController(
                 oi::getLeftX,
                 oi::getLeftY,
-                oi::getRightX, true, 5.1
+                oi::getRightX, true, 1
         ));
     }
 
